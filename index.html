@@ -1,0 +1,710 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Student Grades</title>
+  <style>
+    :root{
+      --navy:#0b2a63;
+      --bg:#efefef;
+      --card:#ffffff;
+      --line:#d9d9d9;
+      --muted:#6b7280;
+      --blueText:#2a6f97;
+      --rowBg:#e9f4fb;
+      --shadow: 0 6px 18px rgba(0,0,0,.08);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color:#111;
+    }
+
+    /* top bar */
+    .topbar{
+      height:84px;
+      background: linear-gradient(180deg, #071b4f, var(--navy));
+      display:flex;
+      align-items:flex-end;
+      padding: 0 14px 12px;
+      position: sticky;
+      top:0;
+      z-index: 10;
+    }
+    .topbar-inner{
+      width:100%;
+      max-width: 560px;
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .btn{
+      width:44px;height:44px;
+      border:0;
+      border-radius: 50%;
+      background: rgba(255,255,255,.08);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+    }
+    .btn:active{ transform: scale(.98); }
+    .ico{ width:22px; height:22px; fill:#fff; opacity:.95; }
+
+    /* page */
+    .wrap{
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 14px;
+    }
+    .title{
+      font-size: 18px;         /* smaller */
+      font-weight: 500;        /* less bold */
+      margin: 8px 2px 14px;
+      color:#3b3b3b;
+    }
+
+    /* dropdowns like screenshot */
+    .filters{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-bottom: 10px;
+    }
+    select{
+      width: 240px;
+      max-width: 100%;
+      border:0;
+      background: transparent;
+      font-size: 20px;         /* smaller */
+      font-weight: 600;
+      color:#3b3b3b;
+      padding: 6px 4px;
+      outline:none;
+      appearance: none;
+    }
+    .select-wrap{
+      position: relative;
+      width: 260px;
+    }
+    .select-wrap::after{
+      content:"";
+      position:absolute;
+      right:10px; top:50%;
+      transform: translateY(-30%);
+      border: 7px solid transparent;
+      border-top-color:#666;
+      pointer-events:none;
+    }
+
+    /* swipe slider */
+    .slider{
+      position: relative;
+      margin: 12px 0 10px;
+    }
+    .slides{
+      display:flex;
+      overflow-x:auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      gap: 12px;
+      padding-bottom: 2px;
+    }
+    .slides::-webkit-scrollbar{ display:none; }
+
+    .slide{
+      flex: 0 0 100%;
+      scroll-snap-align: start;
+    }
+
+    .dots{
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      margin: 8px 0 6px;
+    }
+    .dot{
+      width:6px;height:6px;border-radius:50%;
+      background:#c9c9c9;
+    }
+    .dot.active{ background:#2f2f2f; }
+
+    /* cards */
+    .card{
+      background: var(--card);
+      border: 1px solid var(--line);
+      padding: 14px;
+    }
+    .card-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom: 8px;
+    }
+    .card-head h3{
+      margin:0;
+      font-size: 20px;      /* smaller */
+      font-weight: 600;     /* less bold */
+      color:#444;
+    }
+    .link{
+      color:#3b82f6;
+      font-weight:600;
+      text-decoration:none;
+      cursor:pointer;
+      white-space:nowrap;
+      font-size: 14px;
+    }
+
+    /* GPA card layout */
+    .gpa-grid{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:0;
+      border-top: 1px solid var(--line);
+      margin-top: 10px;
+    }
+    .gpa-cell{
+      text-align:center;
+      padding: 14px 6px;
+      border-right: 1px solid var(--line);
+    }
+    .gpa-cell:last-child{ border-right:0; }
+    .gpa-num{
+      font-size: 20px;     /* smaller */
+      font-weight: 600;    /* less bold */
+      color:#444;
+      margin-bottom: 4px;
+    }
+    .gpa-lab{
+      font-size: 13px;
+      color:#666;
+    }
+
+    /* Primary curriculum */
+    .pc-grid{
+      display:grid;
+      grid-template-columns: 115px 1fr;
+      gap: 10px 14px;
+      margin-top: 12px;
+      font-size: 16px;     /* smaller */
+      color:#444;
+    }
+    .pc-k{ font-weight:600; }
+    .pc-v{ color:#555; font-weight:500; }
+
+    /* course work header + search */
+    .cw-head{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:10px;
+      margin-top: 8px;
+    }
+    .cw-head h2{
+      margin: 0;
+      font-size: 28px;     /* smaller */
+      font-weight: 500;
+      color:#222;
+    }
+    .search{
+      display:flex;
+      align-items:center;
+      border:1px solid var(--line);
+      background:#fff;
+      height: 38px;
+      width: 260px;
+      max-width: 55vw;
+    }
+    .search input{
+      border:0;
+      outline:none;
+      padding: 0 10px;
+      flex:1;
+      font-size: 14px;
+      color:#444;
+      background: transparent;
+    }
+    .search button{
+      width: 44px;
+      height: 100%;
+      border:0;
+      background:#fff;
+      border-left: 1px solid var(--line);
+      cursor:pointer;
+    }
+    .search svg{ width:18px;height:18px; fill:#666; }
+
+    /* course list */
+    .list{
+      margin-top: 10px;
+      border-top: 1px solid var(--line);
+      background:#fff;
+    }
+    .course{
+      border-bottom: 1px solid var(--line);
+    }
+    .course-top{
+      background: var(--rowBg);
+      padding: 14px 12px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      cursor:pointer;
+    }
+    .chev{
+      width:22px;
+      flex: 0 0 auto;
+      display:grid;
+      place-items:center;
+      color:#555;
+      font-size: 20px;  /* smaller */
+      transform: rotate(0deg);
+      transition: transform .16s ease;
+    }
+    .course.open .chev{ transform: rotate(180deg); }
+
+    .course-main{
+      flex:1;
+      min-width: 0;
+    }
+    .c-name{
+      font-size: 22px;    /* smaller */
+      font-weight: 500;   /* less bold */
+      color: var(--blueText);
+      margin: 0 0 6px;
+      line-height: 1.1;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .c-meta{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      color:#444;
+      font-size: 16px;   /* smaller */
+      font-weight: 400;
+    }
+    .c-meta .muted{ color:#555; }
+
+    .grade-col{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
+      margin-left: 6px;
+      flex:0 0 auto;
+    }
+    .grade-circle{
+      width:56px;height:56px;
+      border-radius:50%;
+      border: 2px solid #c0c0c0;
+      display:grid;
+      place-items:center;
+      font-weight: 600;   /* less bold */
+      color:#444;
+      background:#fff;
+      font-size: 16px;    /* smaller */
+    }
+    .final-label{
+      font-size: 13px;
+      color:#666;
+    }
+
+    .course-details{
+      display:none;
+      padding: 14px 16px 18px;
+      background:#fff;
+    }
+    .course.open .course-details{ display:block; }
+
+    .detail-line{
+      font-size: 16px;  /* smaller */
+      font-weight: 400;
+      color:#333;
+      margin: 6px 0;
+    }
+    .detail-line .k{
+      display:inline-block;
+      min-width: 160px;
+      color:#333;
+      font-weight: 500;  /* less bold */
+    }
+    .detail-line .v{
+      color:#444;
+      font-weight: 400;
+    }
+
+    .footer-space{ height: 18px; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="btn" id="appsBtn" aria-label="Apps">
+        <svg class="ico" viewBox="0 0 24 24"><path d="M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z"/></svg>
+      </button>
+      <div style="display:flex; gap:10px;">
+        <button class="btn" id="settingsBtn" aria-label="Settings">
+          <svg class="ico" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.2 7.2 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 1h-3.8a.5.5 0 0 0-.49.42l-.36 2.54c-.58.23-1.12.54-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 7.48a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.83 14.52a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.3.6.22l2.39-.96c.5.4 1.05.71 1.63.94l.36 2.54c.04.24.25.42.49.42h3.8c.24 0 .45-.18.49-.42l.36-2.54c.58-.23 1.12-.54 1.63-.94l2.39.96c.22.09.47 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5z"/></svg>
+        </button>
+        <button class="btn" id="profileBtn" aria-label="Profile">
+          <svg class="ico" viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-4.42 0-8 2-8 4.5V21h16v-2.5C20 16 16.42 14 12 14z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="title">Student Grades - <span id="studentName">Maya Mohammad Salma</span> (<span id="studentId">202501808</span>)</div>
+
+    <div class="filters">
+      <div class="select-wrap">
+        <select id="termSelect">
+          <option>Fall 2025-2026</option>
+          <option>Spring 2025-2026</option>
+          <option>Summer 2025-2026</option>
+        </select>
+      </div>
+
+      <!-- locked: no Graduate -->
+      <div class="select-wrap">
+        <select id="levelSelect" disabled>
+          <option selected>Undergraduate</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- SLIDER: swipe between GPA + Primary Curriculum -->
+    <section class="slider">
+      <div class="slides" id="slides">
+        <!-- Slide 1: GPA -->
+        <div class="slide">
+          <div class="card">
+            <div class="card-head">
+              <h3>GPA Summary</h3>
+              <a class="link" href="javascript:void(0)" id="gpaDetails">View Details</a>
+            </div>
+            <div class="gpa-grid" id="gpaGrid"></div>
+          </div>
+        </div>
+
+        <!-- Slide 2: Primary Curriculum -->
+        <div class="slide">
+          <div class="card">
+            <div class="card-head">
+              <h3>Primary Curriculum</h3>
+              <a class="link" href="javascript:void(0)" id="pcDetails">View Details</a>
+            </div>
+
+            <div class="pc-grid">
+              <div class="pc-k">Level :</div><div class="pc-v" id="pcLevel">Undergraduate</div>
+              <div class="pc-k">College :</div><div class="pc-v" id="pcCollege">College of Business</div>
+              <div class="pc-k">Degree :</div><div class="pc-v" id="pcDegree">B.A. Business Administration</div>
+              <div class="pc-k">Program :</div><div class="pc-v" id="pcProgram">B.A. General Business</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dots">
+        <div class="dot active" id="dot0"></div>
+        <div class="dot" id="dot1"></div>
+      </div>
+    </section>
+
+    <!-- Course work -->
+    <div class="cw-head">
+      <h2>Course Work</h2>
+      <div class="search">
+        <input id="searchInput" placeholder="Course Title or Subject Code" />
+        <button id="searchBtn" aria-label="Search">
+          <svg viewBox="0 0 24 24"><path d="M10 2a8 8 0 1 0 4.9 14.32l4.39 4.39 1.41-1.41-4.39-4.39A8 8 0 0 0 10 2zm0 2a6 6 0 1 1 0 12 6 6 0 0 1 0-12z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <section class="list" id="courseList"></section>
+    <div class="footer-space"></div>
+  </main>
+
+  <script>
+    // --- Data ---
+    const courses = [
+      {
+        name:"University Writing",
+        code:"ENG 101",
+        section:"F14",
+        attempted:3.000,
+        grade:"A+",
+        details:{
+          midterm:"",
+          campus:"M",
+          earned:3.000,
+          gpaHours:3.000,
+          quality:12.00,
+          crn:"1180",
+          term:"Fall 2025-2026",
+          level:"Undergraduate",
+          comments:""
+        }
+      },
+      {
+        name:"Arabic Language I",
+        code:"ARB 101",
+        section:"F 1",
+        attempted:2.000,
+        grade:"C",
+        details:{
+          midterm:"",
+          campus:"M",
+          earned:2.000,
+          gpaHours:2.000,
+          quality:4.00,
+          crn:"1223",
+          term:"Fall 2025-2026",
+          level:"Undergraduate",
+          comments:""
+        }
+      },
+      {
+        name:"Islamic Studies I",
+        code:"ISL 101",
+        section:"F 3",
+        attempted:2.000,
+        grade:"c",
+        details:{
+          midterm:"-",
+          campus:"M",
+          earned:2.000,
+          gpaHours:2.000,
+          quality:4.00,
+          crn:"1237",
+          term:"Fall 2025-2026",
+          level:"Undergraduate",
+          comments:""
+        }
+      },
+      {
+        name:"Microeconomics",
+        code:"ECO 101",
+        section:"F1",
+        attempted:3.000,
+        grade:"B",
+        details:{
+          midterm:"",
+          campus:"M",
+          earned:3.000,
+          gpaHours:3.000,
+          quality:9.00,
+          crn:"2173",
+          term:"Fall 2025-2026",
+          level:"Undergraduate",
+          comments:""
+        }
+      },
+      {
+        name:"Student Orien. & Acad. Success",
+        code:"COB 100",
+        section:"F",
+        attempted:1.000,
+        grade:"A+",
+        details:{
+          midterm:"",
+          campus:"M",
+          earned:1.000,
+          gpaHours:1.000,
+          quality:4.00,
+          crn:"2016",
+          term:"Fall 2025-2026",
+          level:"Undergraduate",
+          comments:""
+        }
+      },
+      {
+        name:"Principles of Management",
+        code:"MGT 125",
+        section:"F4",
+        attempted:3.000,
+        grade:"A",
+        details:{
+          midterm:"",
+          campus:"M",
+          earned:3.000,
+          gpaHours:3.000,
+          quality:12.00,
+          crn:"2421",
+          term:"Fall 2025-2026",
+          level:"Undergraduate",
+          comments:""
+        }
+      },
+      {
+        name:"College Math - Pre Calculus",
+        code:"MAT 100",
+        section:"F 4",
+        attempted:3.000,
+        grade:"D",
+        details:{
+          midterm:"",
+          campus:"M",
+          earned:3.000,
+          gpaHours:3.000,
+          quality:3.00,
+          crn:"2585",
+          term:"Fall 2025-2026",
+          level:"Undergraduate",
+          comments:""
+        }
+        
+      }
+    ];
+
+    const gpa = { selected: 2.82, institutional: 2.82, transfer: "-", overall: 2.82 };
+
+    const gpaGrid = document.getElementById("gpaGrid");
+    const courseList = document.getElementById("courseList");
+    const searchInput = document.getElementById("searchInput");
+    const termSelect = document.getElementById("termSelect");
+    const slides = document.getElementById("slides");
+
+    function renderGPA(){
+      const items = [
+        {num: gpa.selected, label:"Selected Term"},
+        {num: gpa.institutional, label:"Institutional"},
+        {num: gpa.transfer, label:"Transfer"},
+        {num: gpa.overall, label:"Overall"},
+      ];
+      gpaGrid.innerHTML = items.map(x => `
+        <div class="gpa-cell">
+          <div class="gpa-num">${x.num}</div>
+          <div class="gpa-lab">${x.label}</div>
+        </div>
+      `).join("");
+    }
+
+    function escapeHtml(s){
+      return String(s)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;");
+    }
+
+    function courseTemplate(c, idx){
+      const d = c.details;
+      return `
+        <article class="course" data-idx="${idx}">
+          <div class="course-top" role="button" tabindex="0" aria-expanded="false">
+            <div class="chev">^</div>
+            <div class="course-main">
+              <div class="c-name">${escapeHtml(c.name)}</div>
+              <div class="c-meta">
+                <div class="muted">${escapeHtml(c.code)}, ${escapeHtml(c.section)}</div>
+                <div class="muted">Attempted Hours : ${Number(c.attempted).toFixed(3)}</div>
+              </div>
+            </div>
+
+            <div class="grade-col">
+              <div class="grade-circle">${escapeHtml(c.grade)}</div>
+              <div class="final-label">Final Grade</div>
+            </div>
+          </div>
+
+          <div class="course-details">
+            <div class="detail-line"><span class="k">Midterm Grade :</span> <span class="v">${escapeHtml(d.midterm)}</span></div>
+            <div class="detail-line"><span class="k">Campus :</span> <span class="v">${escapeHtml(d.campus)}</span></div>
+            <div class="detail-line"><span class="k">Earned Hours :</span> <span class="v">${Number(d.earned).toFixed(3)}</span></div>
+            <div class="detail-line"><span class="k">GPA Hours :</span> <span class="v">${Number(d.gpaHours).toFixed(3)}</span></div>
+            <div class="detail-line"><span class="k">Quality Points :</span> <span class="v">${Number(d.quality).toFixed(2)}</span></div>
+            <div class="detail-line"><span class="k">CRN :</span> <span class="v">${escapeHtml(d.crn)}</span></div>
+            <div class="detail-line"><span class="k">Term :</span> <span class="v">${escapeHtml(d.term)}</span></div>
+            <div class="detail-line"><span class="k">Level :</span> <span class="v">Undergraduate</span></div>
+            <div class="detail-line"><span class="k">Narrative Grade Comments :</span> <span class="v">${escapeHtml(d.comments)}</span></div>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderCourses(filter=""){
+      const q = filter.trim().toLowerCase();
+      const filtered = courses.filter(c =>
+        !q ||
+        c.name.toLowerCase().includes(q) ||
+        c.code.toLowerCase().includes(q)
+      );
+
+      courseList.innerHTML = filtered.map((c, idx) => courseTemplate(c, idx)).join("");
+    }
+
+    function closeAll(){
+      document.querySelectorAll(".course").forEach(card => card.classList.remove("open"));
+      document.querySelectorAll(".course-top").forEach(t => t.setAttribute("aria-expanded", "false"));
+    }
+
+    function toggleCourse(courseEl){
+      const isOpen = courseEl.classList.contains("open");
+      closeAll();
+      if(!isOpen){
+        courseEl.classList.add("open");
+        courseEl.querySelector(".course-top")?.setAttribute("aria-expanded", "true");
+        courseEl.scrollIntoView({behavior:"smooth", block:"start"});
+      }
+    }
+
+    courseList.addEventListener("click", (e) => {
+      const top = e.target.closest(".course-top");
+      if(!top) return;
+      toggleCourse(top.closest(".course"));
+    });
+
+    courseList.addEventListener("keydown", (e) => {
+      if(e.key !== "Enter" && e.key !== " ") return;
+      const top = e.target.closest(".course-top");
+      if(!top) return;
+      e.preventDefault();
+      toggleCourse(top.closest(".course"));
+    });
+
+    searchInput.addEventListener("input", (e) => renderCourses(e.target.value));
+    document.getElementById("searchBtn").addEventListener("click", () => renderCourses(searchInput.value));
+
+    termSelect.addEventListener("change", () => {
+      courses.forEach(c => c.details.term = termSelect.value);
+      closeAll();
+      renderCourses(searchInput.value);
+    });
+
+    // dots update for slider
+    function setActiveDot(i){
+      document.getElementById("dot0").classList.toggle("active", i === 0);
+      document.getElementById("dot1").classList.toggle("active", i === 1);
+    }
+
+    slides.addEventListener("scroll", () => {
+      const i = Math.round(slides.scrollLeft / slides.clientWidth);
+      setActiveDot(Math.max(0, Math.min(1, i)));
+    });
+
+    // click dots to jump
+    document.getElementById("dot0").addEventListener("click", () => slides.scrollTo({left: 0, behavior:"smooth"}));
+    document.getElementById("dot1").addEventListener("click", () => slides.scrollTo({left: slides.clientWidth, behavior:"smooth"}));
+
+    // top icons
+    appsBtn.addEventListener("click", ()=>alert("Apps menu placeholder (we can make this a real drawer)"));
+    settingsBtn.addEventListener("click", ()=>alert("Settings placeholder"));
+    profileBtn.addEventListener("click", ()=>alert("Profile placeholder"));
+
+    gpaDetails.addEventListener("click", ()=>alert("GPA Details page placeholder"));
+    pcDetails.addEventListener("click", ()=>alert("Primary Curriculum details placeholder"));
+
+    renderGPA();
+    renderCourses();
+  </script>
+</body>
+</html>
